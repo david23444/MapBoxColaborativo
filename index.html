@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Mapa Tiempo Real</title>
+ 
+  <!-- MAPBOX -->
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+ 
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  </style>
+</head>
+<body>
+ 
+<div id="map"></div>
+ 
+<script type="module">
+ 
+  // 🔥 FIREBASE
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+ 
+  const firebaseConfig = {
+    apiKey: "AIzaSyCakNak9rjURm04sBnKps2D_YbDGdChle8",
+    authDomain: "mapatiemporealseguro.firebaseapp.com",
+    databaseURL: "https://mapatiemporealseguro-default-rtdb.firebaseio.com",
+    projectId: "mapatiemporealseguro",
+    storageBucket: "mapatiemporealseguro.firebasestorage.app",
+    messagingSenderId: "126351296804",
+    appId: "1:126351296804:web:52d0c90fc30c1f7c240bb1"
+  };
+ 
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+ 
+  // 🗺 MAPBOX
+  mapboxgl.accessToken = "pk.eyJ1IjoiZGF2aWRhY2NtYXAiLCJhIjoiY21tNWVpazg2MDV4NjJ3b20xZGU1c3h6MCJ9.UObKki7mOwbZvUTvv7r7pQ";
+ 
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [-68.1198, -16.5034],
+    zoom: 16
+  });
+ 
+  const marker = new mapboxgl.Marker()
+    .setLngLat([-68.1198, -16.5034])
+    .addTo(map);
+ 
+  // 🔐 LOGIN ANÓNIMO (para cumplir auth != null)
+  signInAnonymously(auth)
+    .then(() => {
+ 
+      const ubicacionesRef = ref(db, "ubicaciones");
+ 
+      onValue(ubicacionesRef, (snapshot) => {
+        const data = snapshot.val();
+ 
+        if (data) {
+          const uid = Object.keys(data)[0];
+          const lat = data[uid].latitud;
+          const lng = data[uid].longitud;
+ 
+          marker.setLngLat([lng, lat]);
+ 
+          map.flyTo({
+            center: [lng, lat],
+            essential: true
+          });
+        }
+      });
+ 
+    })
+    .catch((error) => {
+      console.error("Error autenticando:", error);
+    });
+ 
+</script>
+ 
+</body>
+</html> 
